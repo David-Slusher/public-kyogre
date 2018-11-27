@@ -4,7 +4,7 @@ from isolation import *
 class Aqua(Player):
     def __init__(self, name, token):
         super(Aqua, self).__init__(name, token)
-
+        self.enemyToken = Board.BLUE_TOKEN if self._token == Board.RED_TOKEN else Board.RED_TOKEN
     def take_turn(self, board):
         """
         Make a move on the Isolation board and push out space
@@ -13,32 +13,40 @@ class Aqua(Player):
         """
         # Each subclass must implement this method
         raise NotImplementedError
-        #make move
-            #needs to move towards enemy pawn until it cant get closer
 
+        # where pawn currently is
+        currentTile = board.token_location(self._token)
 
-        # print("\n{} taking turn: ".format(self._name), end='')
-        #
-        # # Collect board state info to generate a move from
-        # space_id = board.token_location(self._token)
-        # neighbors = board.neighbor_tiles(space_id)
-        # print('possible moves:', neighbors)
-        # tiled_spaces = board.push_outable_square_ids()
-        #
-        # # Select a square to move to and a tile to push out.
-        # # Once a neighbor square is chosen to move to,
-        # # that square can no longer be pushed out, but
-        # # the square vacated might be able to be pushed out
-        # to_space_id = random.choice(list(neighbors))
-        # tiled_spaces.discard(to_space_id)
-        # # if space_id not in board.start_squares():
-        # #     tiled_spaces.add(space_id)
-        # tiled_spaces.add(space_id)
-        # print('possible push outs:', tiled_spaces)
-        # push_out_space_id = random.choice(list(tiled_spaces))
-        #
-        # # print('    Moving to', to_space_id, 'and pushing out', push_out_space_id)
-        #
+        # 8 (max) surrounding squares
+        neighbors = board.neighbor_tiles(space_id)
+
+        # everything that can be pushed out
+        tiledSpaces = board.push_outable_square_ids()
+
+        # start spaces that cannot be pushed out
+        startSpaces = board.start_squares()
+
+        # get enemy current location
+        # used to see if we can move towards the enmey
+        enemyLocation = token_location(self.enemyToken)
+
+        #TODO
+        # spaceMovedTo = algorithm decision
+
+        # remove the space we moved to from the spaces that can be pushed out
+        tiledSpaces.discard(spaceMovedTo)
+
+        #space we just moved from can be pushed out now
+        tiled_spaces.add(space_id)
+
+        # to choose which space to be pushed out, select one that is closest to enemy
+        # and has the most number of void edges where a void edge is defined as
+        # a space neighboring the selected space that is pushed out and edges of the board count as
+        # pushed out
+
+        # neighbors include pushed out squares
+        enemyNeighbors = neighbors(enemyLocation)
+
         # move = isolation.Move(to_space_id, push_out_space_id)
         # print('   ', move)
         # return move
@@ -48,6 +56,7 @@ class Aqua(Player):
 class Strategy:
     def __init__(self):
         return
+
 
     def move(self, board):
         """

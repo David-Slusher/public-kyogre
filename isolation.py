@@ -412,7 +412,7 @@ class Player:
         :return: str
         """
         return self._name
-
+    
     def token(self):
         """
         Get this player's token
