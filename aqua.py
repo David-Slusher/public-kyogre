@@ -4,7 +4,8 @@ from isolation import *
 class Aqua(Player):
     def __init__(self, name, token):
         super(Aqua, self).__init__(name, token)
-        self.enemyToken = Board.BLUE_TOKEN if self._token == Board.RED_TOKEN else Board.RED_TOKEN
+        self._enemyToken = Board.BLUE_TOKEN if self._token == Board.RED_TOKEN else Board.RED_TOKEN
+
     def take_turn(self, board):
         """
         Make a move on the Isolation board and push out space
@@ -28,7 +29,7 @@ class Aqua(Player):
 
         # get enemy current location
         # used to see if we can move towards the enmey
-        enemyLocation = token_location(self.enemyToken)
+        enemyLocation = token_location(self._enemyToken)
 
         #TODO
         # spaceMovedTo = algorithm decision
@@ -54,11 +55,12 @@ class Aqua(Player):
 
 
 class Strategy:
-    def __init__(self):
-        return
+    def __init__(self, board, token, enemyToken):
+        self.board = board
+        self.token = token
+        self.enemyToken = enemyToken
 
-
-    def move(self, board):
+    def move(self):
         """
         Returns the id of the space to move to
         :param board: a Board object
@@ -66,13 +68,41 @@ class Strategy:
         """
         raise NotImplementedError
 
-    def push(self, board):
+    def push(self):
         """
         Returns the id of the space to push
         :param board: a Board object
         :return: push_space_id
         """
         raise NotImplementedError
+
+    def moving_closer(self, start, tile):
+        """
+        Return true if a tile is closer to the enemy pawn than a start tile
+        :param start: The starting tile
+        :param tile: The tile under consideration for moving to
+        :return: True if tile is closer to the enemy pawn than start, False if not
+        """
+        if self.board.distance_between(tile, self.enemyToken) <= self.board.distance_between(start, self.enemyToken) - 1:
+            return True
+        else:
+            return False
+
+    def path_exists(self, start):
+        """
+        Determines if a path exists to the enemy pawn in which the player pawn can continuously move towards the enemy
+        :param start: The starting tile
+        :return: True if a path exists, False if not
+        """
+        exists = False
+        for tile in self.board.neighbor_tiles(start):
+            if self.moving_closer(start, tile):
+                if exists or self.enemyToken in self.board.neighbor_tiles(tile):
+                    return True
+                else:
+                    if not exists:
+                        exists = self.path_exists(start)
+        return exists
 
 
 class LateStrat(Strategy):
@@ -82,7 +112,6 @@ class LateStrat(Strategy):
     """
     def __init__(self):
         super(LateStrat, self).__init__()
-
 
 
 class EarlyStrat(Strategy):
