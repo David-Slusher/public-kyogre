@@ -105,17 +105,17 @@ class Strategy:
                         exists = self.path_exists(start)
         return exists
 
-    def potentialMove(self, start):
+    def potentialMoves(self, start):
         """
         Determines which of the spaces possible is the safest to move to where safeness is defined
         as the number of neighbroing tiles a tile has such that the max safety is 8
         :param start: The starting tile
-        :return: The tile with the highest safety rating
+        :return: A sorted list of tuples containg the possible tiles with their safety rating
         """
         tileSafenessList = [(tile, self.safety(tile)) for tile in self.board.neighbor_tiles(start)
             if path_exists(tile)]
         tileSafenessListSorted = sorted(tileSafenessList, key = lambda x: x[1])
-        return tileSafenessListSorted[0][0]
+        return tileSafenessListSorted
 
     def safety(self, tile):
         """
