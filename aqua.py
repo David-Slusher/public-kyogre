@@ -31,7 +31,7 @@ class Aqua(Player):
         # used to see if we can move towards the enmey
         enemyLocation = token_location(self._enemyToken)
 
-        #TODO
+        # TODO
         # spaceMovedTo = algorithm decision
 
         # remove the space we moved to from the spaces that can be pushed out
@@ -90,7 +90,8 @@ class Strategy:
 
     def path_exists(self, start):
         """
-        Determines if a path exists to the enemy pawn in which the player pawn can continuously move towards the enemy
+        Determines if a path exists to the enemy pawn in which the player pawn can continuously move
+        towards the enemy
         :param start: The starting tile
         :return: True if a path exists, False if not
         """
@@ -103,6 +104,27 @@ class Strategy:
                     if not exists:
                         exists = self.path_exists(start)
         return exists
+
+    def potentialMove(self, start):
+        """
+        Determines which of the spaces possible is the safest to move to where safeness is defined
+        as the number of neighbroing tiles a tile has such that the max safety is 8
+        :param start: The starting tile
+        :return: The tile with the highest safety rating
+        """
+        tileSafenessList = [(tile, self.safety(tile)) for tile in self.board.neighbor_tiles(start)
+            if path_exists(tile)]
+        tileSafenessListSorted = sorted(tileSafenessList, key = lambda x: x[1])
+        return tileSafenessListSorted[0][0]
+
+    def safety(self, tile):
+        """
+        Deterimine the safety of a given tile where safety is defined on a scale of 0, meaning the
+        tile has no neighboring tiles, to 8, meaning all neighboring tiles are present and not pushed out
+        :param tile: a tile on the board
+        :return: the number of neighboring tiles a tile has
+        """
+        return len(self.board.neighbor_tiles(tile))
 
 
 class LateStrat(Strategy):
