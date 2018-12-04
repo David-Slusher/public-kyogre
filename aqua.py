@@ -115,6 +115,7 @@ class Strategy:
         tileSafenessList = [(tile, self.safety(tile)) for tile in self.board.neighbor_tiles(start)
             if path_exists(tile)]
         tileSafenessListSorted = sorted(tileSafenessList, key = lambda x: x[1])
+
         return tileSafenessListSorted
 
     def safety(self, tile):
@@ -125,6 +126,17 @@ class Strategy:
         :return: the number of neighboring tiles a tile has
         """
         return len(self.board.neighbor_tiles(tile))
+
+    def potentialPushes(enemy):
+
+        voidEdgeList = [(tile, getVoidEdges(tile)) for tile in self.board.neighbor_tiles(enemy)]
+        voidEdgeListSorted = sorted(voidEdgeList, key = lambda x: x[1])
+
+        return voidEdgeListSorted
+
+    def getVoidEdges(tile):
+
+        return 8 - len(neighbor_tiles(tile))
 
 
 class LateStrat(Strategy):
