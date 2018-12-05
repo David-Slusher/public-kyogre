@@ -76,17 +76,76 @@ class Strategy:
         """
         raise NotImplementedError
 
-    def moving_closer(self, start, tile):
+    def safety(self, tile):
         """
-        Return true if a tile is closer to the enemy pawn than a start tile
+        Deterimine the safety of a given tile where safety is defined on a scale of 0,
+        meaning the tile has no neighboring tiles, to 8, meaning all neighboring tiles
+        are present and not pushed out
+        :param tile: a tile on the board
+        :return: the number of neighboring tiles a tile has
+        """
+        return len(self.board.neighbor_tiles(tile))
+
+    def potentialPushes(enemy):
+        """
+        Determine which of the enemy's neighboring tiles is the best tile to push using void edge
+        heuristic where the tile with the most void edges in the neighbor tiles is the ideal push
+        :param enemy: the enemy tile location
+        :return: a sorted list of the neighboring tiles in descending order of void edges
+        """
+        voidEdgeList = [(tile, getVoidEdges(tile)) for tile in self.board.neighbor_tiles(enemy)]
+        voidEdgeListSorted = sorted(voidEdgeList, key = lambda x: x[1])
+
+        return voidEdgeListSorted
+
+    def getVoidEdges(tile):
+        """
+        Determine the number of void edges of a given tile
+        :param tile: a tile on the Board
+        :return: an integer representing the number of pushed out spaces within the
+        neighbors of tile
+        """
+        return 8 - len(neighbor_tiles(tile))
+
+
+class LateStrat(Strategy):
+    """
+    Follow the Late Strategy of moving to space with
+    most available moves on next turn
+    """
+    def __init__(self):
+        super(LateStrat, self).__init__()
+
+
+    def potentialLateMoves(self):
+        """
+        Determine the spaces that we can move to with the highest safety and extended safety
+        :return: dictionary of moves with tuples of safety and extended safety as the value
+        """
+        moveDict = {}
+        return moveDict
+
+
+
+class EarlyStrat(Strategy):
+    """
+    Follow the Early Strategy of moving toward enemy pawn
+    """
+    def __init__(self):
+        super(EarlyStrat, self).__init__()
+
+    def potentialEarlyMoves(self, start):
+        """
+        Determines which of the spaces possible is the safest to move to where safeness is defined
+        as the number of neighbroing tiles a tile has such that the max safety is 8
         :param start: The starting tile
-        :param tile: The tile under consideration for moving to
-        :return: True if tile is closer to the enemy pawn than start, False if not
+        :return: A sorted list of tuples containg the possible tiles with their safety rating
         """
-        if self.board.distance_between(tile, self.enemyToken) <= self.board.distance_between(start, self.enemyToken) - 1:
-            return True
-        else:
-            return False
+        tileSafenessList = [(tile, self.safety(tile)) for tile in self.board.neighbor_tiles(start)
+            if path_exists(tile)]
+        tileSafenessListSorted = sorted(tileSafenessList, key = lambda x: x[1])
+
+        return tileSafenessListSorted
 
     def path_exists(self, start):
         """
@@ -105,52 +164,14 @@ class Strategy:
                         exists = self.path_exists(start)
         return exists
 
-    def potentialMoves(self, start):
+    def moving_closer(self, start, tile):
         """
-        Determines which of the spaces possible is the safest to move to where safeness is defined
-        as the number of neighbroing tiles a tile has such that the max safety is 8
+        Return true if a tile is closer to the enemy pawn than a start tile
         :param start: The starting tile
-        :return: A sorted list of tuples containg the possible tiles with their safety rating
+        :param tile: The tile under consideration for moving to
+        :return: True if tile is closer to the enemy pawn than start, False if not
         """
-        tileSafenessList = [(tile, self.safety(tile)) for tile in self.board.neighbor_tiles(start)
-            if path_exists(tile)]
-        tileSafenessListSorted = sorted(tileSafenessList, key = lambda x: x[1])
-
-        return tileSafenessListSorted
-
-    def safety(self, tile):
-        """
-        Deterimine the safety of a given tile where safety is defined on a scale of 0, meaning the
-        tile has no neighboring tiles, to 8, meaning all neighboring tiles are present and not pushed out
-        :param tile: a tile on the board
-        :return: the number of neighboring tiles a tile has
-        """
-        return len(self.board.neighbor_tiles(tile))
-
-    def potentialPushes(enemy):
-
-        voidEdgeList = [(tile, getVoidEdges(tile)) for tile in self.board.neighbor_tiles(enemy)]
-        voidEdgeListSorted = sorted(voidEdgeList, key = lambda x: x[1])
-
-        return voidEdgeListSorted
-
-    def getVoidEdges(tile):
-
-        return 8 - len(neighbor_tiles(tile))
-
-
-class LateStrat(Strategy):
-    """
-    Follow the Late Strategy of moving to space with
-    most available moves on next turn
-    """
-    def __init__(self):
-        super(LateStrat, self).__init__()
-
-
-class EarlyStrat(Strategy):
-    """
-    Follow the Early Strategy of moving toward enemy pawn
-    """
-    def __init__(self):
-        super(EarlyStrat, self).__init__()
+        if self.board.distance_between(tile, self.enemyToken) <= self.board.distance_between(start, self.enemyToken) - 1:
+            return True
+        else:
+            return False
