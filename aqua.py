@@ -116,13 +116,22 @@ class LateStrat(Strategy):
     def __init__(self):
         super(LateStrat, self).__init__()
 
-
-    def potentialLateMoves(self):
+    def potentialLateMoves(self,token):
         """
         Determine the spaces that we can move to with the highest safety and extended safety
         :return: dictionary of moves with tuples of safety and extended safety as the value
         """
+        neighbors = self.board.neighbor_tiles(self.board.token_location(token))
         moveDict = {}
+        for neighbor in neighbors:
+            tile = neighbor
+            safeness = safety(neighbor)
+            totalSafeness = 0
+            extendedNeighbors = self.board.neighbor_tiles(neighbor)
+            for extendedNeighbor in extendedNeighbors:
+                extended_safeness = safety(extendedNeighbor)
+                totalSafeness += extended_safeness
+            moveDict[tile] = (safeness, totalSafeness)
         return moveDict
 
 
