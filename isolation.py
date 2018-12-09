@@ -479,6 +479,7 @@ class Match:
             print()
             player = self._blue_player
             player_square_id = self._board.token_location(player.token())
+            move = None
             while self._board.neighbor_tiles(player_square_id):
                 print()
                 print(self._board)
@@ -494,7 +495,7 @@ class Match:
                 # print(self.script())
 
             # We have a winner!
-            self ._winner = self._red_player if player is self._blue_player else self._blue_player
+            self._winner = self._red_player if player is self._blue_player else self._blue_player
             print(self._board)
             moves = self._board.moves()
             print(len(moves), 'moves.')
@@ -506,6 +507,7 @@ class Match:
             print("OOPS! Something went wrong.")
             print(self._board.square_id_map())
             print(self._board)
+            print(move)
             print(e)
             print(self.script())
             sys.exit(10)
