@@ -86,26 +86,7 @@ class Strategy:
         """
         return len(self.board.neighbor_tiles(tile))
 
-    def potentialPushes(enemy):
-        """
-        Determine which of the enemy's neighboring tiles is the best tile to push using void edge
-        heuristic where the tile with the most void edges in the neighbor tiles is the ideal push
-        :param enemy: the enemy tile location
-        :return: a sorted list of the neighboring tiles in descending order of void edges
-        """
-        voidEdgeList = [(tile, getVoidEdges(tile)) for tile in self.board.neighbor_tiles(enemy)]
-        voidEdgeListSorted = sorted(voidEdgeList, key = lambda x: x[1])
 
-        return voidEdgeListSorted
-
-    def getVoidEdges(tile):
-        """
-        Determine the number of void edges of a given tile
-        :param tile: a tile on the Board
-        :return: an integer representing the number of pushed out spaces within the
-        neighbors of tile
-        """
-        return 8 - len(neighbor_tiles(tile))
 
 
 class LateStrat(Strategy):
@@ -134,6 +115,14 @@ class LateStrat(Strategy):
             moveDict[tile] = (safeness, totalSafeness)
         return moveDict
 
+    def boxThemIn(self, enemyToken):
+        """
+        Determine the best push to box the enemy in so that they have a smaller playing space than
+        our token
+        :param enemyToken: the location of the enemy
+        :return: the best move as decided by hueristic to reduce the enemy playing space
+        """
+        
 
 
 class EarlyStrat(Strategy):
@@ -184,3 +173,23 @@ class EarlyStrat(Strategy):
             return True
         else:
             return False
+    def potentialPushes(enemy):
+        """
+        Determine which of the enemy's neighboring tiles is the best tile to push using void edge
+        heuristic where the tile with the most void edges in the neighbor tiles is the ideal push
+        :param enemy: the enemy tile location
+        :return: a sorted list of the neighboring tiles in descending order of void edges
+        """
+        voidEdgeList = [(tile, getVoidEdges(tile)) for tile in self.board.neighbor_tiles(enemy)]
+        voidEdgeListSorted = sorted(voidEdgeList, key = lambda x: x[1])
+
+        return voidEdgeListSorted
+
+    def getVoidEdges(tile):
+        """
+        Determine the number of void edges of a given tile
+        :param tile: a tile on the Board
+        :return: an integer representing the number of pushed out spaces within the
+        neighbors of tile
+        """
+        return 8 - len(neighbor_tiles(tile))
