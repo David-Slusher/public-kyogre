@@ -34,7 +34,8 @@ class Aqua(Player):
         enemyLocation = token_location(self._enemyToken)
 
         # TODO
-
+        if not self._strategy.moves(currentTile):
+            self._strategy = LateStrat()
 
         # remove the space we moved to from the spaces that can be pushed out
         tiledSpaces.discard(spaceMovedTo)
@@ -60,7 +61,7 @@ class Strategy:
         self.token = token
         self.enemyToken = enemyToken
 
-    def move(self):
+    def moves(self):
         """
         Returns the id of the space to move to
         :param board: a Board object
@@ -94,7 +95,6 @@ class Strategy:
         # if at end of a path on the tree OR their are no possible moves to make
         if depth == 0: #or len(self.board.neighbor_tiles(token_location)) == 0:
             return len(neighbor_tiles(token)) - len(neighbor_tiles(enemyToken))
-
         if maximizingPlayer:
             #
             # max 8 children - one for each neighbor tile that a pawn can move to
@@ -167,6 +167,14 @@ class EarlyStrat(Strategy):
     """
     def __init__(self):
         super(EarlyStrat, self).__init__()
+
+    def moves(self, start):
+        """
+        Returns list of first values in list of tuples created in potentialEarlyMoves
+        :param start: starting tile
+        :return: a list of tile ids that are possible move locations
+        """
+        return [move[0] for move in self.potentialEarlyMoves(start)]
 
     def potentialEarlyMoves(self, start):
         """
