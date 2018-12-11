@@ -1,10 +1,12 @@
 from isolation import *
-
+from math import *
+from itertools import *
 
 class Aqua(Player):
     def __init__(self, name, token):
         super(Aqua, self).__init__(name, token)
         self._enemyToken = Board.BLUE_TOKEN if self._token == Board.RED_TOKEN else Board.RED_TOKEN
+        self._strategy = EarlyStrat()
 
     def take_turn(self, board):
         """
@@ -13,7 +15,7 @@ class Aqua(Player):
         :return: a Move object
         """
         # Each subclass must implement this method
-        raise NotImplementedError
+
 
         # where pawn currently is
         currentTile = board.token_location(self._token)
@@ -32,7 +34,7 @@ class Aqua(Player):
         enemyLocation = token_location(self._enemyToken)
 
         # TODO
-        # spaceMovedTo = algorithm decision
+
 
         # remove the space we moved to from the spaces that can be pushed out
         tiledSpaces.discard(spaceMovedTo)
@@ -48,10 +50,8 @@ class Aqua(Player):
         # neighbors include pushed out squares
         enemyNeighbors = neighbors(enemyLocation)
 
-        # move = isolation.Move(to_space_id, push_out_space_id)
-        # print('   ', move)
-        # return move
-        #
+        # intial call
+        # minimax(currentPosition, depth of tree, -infinity, +infinity, true)
 
 
 class Strategy:
@@ -86,8 +86,44 @@ class Strategy:
         """
         return len(self.board.neighbor_tiles(tile))
 
+    # position is board state, children are all possible moves, static eval of position is
+    # number of neighbor_tiles
+    # alpha should be -infinity, beta should be +infinity
+    def minimax(board, depth, alpha, beta, maximizingPlayer):
+        maxEval = math.inf
+        # if at end of a path on the tree OR their are no possible moves to make
+        if depth == 0: #or len(self.board.neighbor_tiles(token_location)) == 0:
+            return len(neighbor_tiles(token)) - len(neighbor_tiles(enemyToken))
 
-
+        if maximizingPlayer:
+            #
+            # max 8 children - one for each neighbor tile that a pawn can move to
+            for child in list(combinations_with_replacement(moves(board), pushouts(board))):
+                ourMove = Move()
+                ourMove.to_square_id = child[0]
+                ourMove.pushout_square_id = child[1]
+                boardCopy = copy.deepcopy(board)
+                boardCopy.make_move(token, ourMove)
+                eval = minimax(child, depth - 1, alpha, beta, false)
+                maxEval = max(maxEval, eval)
+                alpha = max(alpha, eval)
+                if beta <= alpha:
+                    break
+            return maxEval
+        else:
+            minEval = -math.inf
+            for child in list(combinations_with_replacement(moves(board), pushouts(board))):
+                theirMove = Move()
+                theirMove.to_square_id = child[0]
+                theirMove.pushout_square_id = child[1]
+                boardCopy = copy.deepcopy(board)
+                boardCopy.make_move(token, theirMove)
+                eval = minimax(child, depth - 1, alpha, beta, true)
+                minEval = max(minEval, eval)
+                beta = max(beta, eval)
+                if alpha <= beta:
+                    break
+            return minEval
 
 class LateStrat(Strategy):
     """
@@ -122,7 +158,7 @@ class LateStrat(Strategy):
         :param enemyToken: the location of the enemy
         :return: the best move as decided by hueristic to reduce the enemy playing space
         """
-        
+
 
 
 class EarlyStrat(Strategy):
