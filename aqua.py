@@ -173,6 +173,7 @@ class EarlyStrat(Strategy):
             return True
         else:
             return False
+
     def potentialPushes(enemy):
         """
         Determine which of the enemy's neighboring tiles is the best tile to push using void edge
