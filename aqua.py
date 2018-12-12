@@ -15,8 +15,6 @@ class Aqua(Player):
         :return: a Move object
         """
         # Each subclass must implement this method
-
-
         # where pawn currently is
         currentTile = board.token_location(self._token)
 

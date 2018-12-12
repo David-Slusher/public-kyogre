@@ -135,7 +135,8 @@ class Board:
 
         cls.CORNER_SQUARE_IDS = frozenset((0, n - 1, (m - 1) * n, m * n - 1))
 
-        # Compute the Chebyshev values
+        # Compute the Chebyshev values and store in a dictionary
+        # Key: (id, radius), Value: frozenset of square id's radius away
         cls.CHEBYSHEV = {}
 
         def compute_chebyshevs(id):
@@ -147,7 +148,7 @@ class Board:
             cls.CHEBYSHEV[(id, 0)] = frozenset({id})
             cls.CHEBYSHEV[(id, 1)] = Board.NEIGHBOR_SETS[id]
             radius = 1
-            while id < max(Board.M, Board.N) and cls.CHEBYSHEV[(id, radius)]:
+            while radius < max(Board.M, Board.N) and cls.CHEBYSHEV[(id, radius)]:
                 # Compute the squares at the next radius
                 squares = cls.CHEBYSHEV[(id, radius)]
                 surrounding_squares = set()
@@ -495,7 +496,7 @@ class Match:
                 # print(self.script())
 
             # We have a winner!
-            self._winner = self._red_player if player is self._blue_player else self._blue_player
+            self ._winner = self._red_player if player is self._blue_player else self._blue_player
             print(self._board)
             moves = self._board.moves()
             print(len(moves), 'moves.')
