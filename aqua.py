@@ -17,44 +17,9 @@ class Aqua(Player):
         :param board: a Board object
         :return: a Move object
         """
-        # Each subclass must implement this method
-        # where pawn currently is
-        currentTile = board.token_location(self._token)
-
-        # 8 (max) surrounding squares
-        neighbors = board.neighbor_tiles(space_id)
-
-        # everything that can be pushed out
-        tiledSpaces = board.push_outable_square_ids()
-
-        # start spaces that cannot be pushed out
-        startSpaces = board.start_squares()
-
-        # get enemy current location
-        # used to see if we can move towards the enmey
-        enemyLocation = board.token_location(self._enemyToken)
-
-        # TODO
         if not self._strategy.moves(board, currentTile):
             self._strategy = LateStrat(self._token, self._enemyToken)
-
-        # remove the space we moved to from the spaces that can be pushed out
-        tiledSpaces.discard(spaceMovedTo)
-
-        #space we just moved from can be pushed out now
-        tiled_spaces.add(space_id)
-
-        # to choose which space to be pushed out, select one that is closest to enemy
-        # and has the most number of void edges where a void edge is defined as
-        # a space neighboring the selected space that is pushed out and edges of the board count as
-        # pushed out
-
-        # neighbors include pushed out squares
-        enemyNeighbors = neighbors(enemyLocation)
-
-        # intial call
-        # minimax(currentPosition, depth of tree, -infinity, +infinity, true)
-
+        return self._strategy.minimax(board, 20, -math.inf, math.inf, True)[1]
 
 class Strategy:
     def __init__(self, token, enemyToken):
@@ -95,37 +60,41 @@ class Strategy:
     # number of neighbor_tiles
     # alpha should be -infinity, beta should be +infinity
     def minimax(self, board, depth, alpha, beta, maximizingPlayer):
-        maxEval = math.inf
+
         # if at end of a path on the tree OR their are no possible moves to make
-        if depth == 0: #or len(self.board.neighbor_tiles(token_location)) == 0:
-            return len(board.neighbor_tiles(self._token)) - len(board.neighbor_tiles(self._enemyToken))
+        if depth == 0 or not board.neighbor_tiles(self._token) or not board.neighbor_tiles(self._enemyToken): #or len(self.board.neighbor_tiles(token_location)) == 0:
+            return len(board.neighbor_tiles(self._token)) - len(board.neighbor_tiles(self._enemyToken)), None
         if maximizingPlayer:
-            #
+            maxEval = -math.inf
+            bestMove = None
             # max 8 children - one for each neighbor tile that a pawn can move to
             for child in list(combinations_with_replacement(self.moves(board, self._token),
                                                             self.pushouts(board, self._enemyToken))):
                 ourMove = Move(child[0], child[1])
                 boardCopy = copy.deepcopy(board)
                 boardCopy.make_move(self._token, ourMove)
-                eval = self.minimax(boardCopy, depth - 1, alpha, beta, False)
-                maxEval = max(maxEval, eval)
+                eval = self.minimax(boardCopy, depth - 1, alpha, beta, False)[0]
+                if eval > maxEval:
+                    bestMove = ourMove
+                    maxEval = eval
                 alpha = max(alpha, eval)
                 if beta <= alpha:
                     break
-            return maxEval
+            return maxEval, bestMove
+
         else:
-            minEval = -math.inf
+            minEval = math.inf
             for child in list(combinations_with_replacement(board.neighbor_tiles(board.token_location(self._enemyToken)),
                                                             board.push_outable_square_ids())):
                 theirMove = Move(child[0], child[1])
                 boardCopy = copy.deepcopy(board)
                 boardCopy.make_move(self._token, theirMove)
-                eval = self.minimax(boardCopy, depth - 1, alpha, beta, True)
-                minEval = max(minEval, eval)
-                beta = max(beta, eval)
+                eval = self.minimax(boardCopy, depth - 1, alpha, beta, True)[0]
+                minEval = min(minEval, eval)
+                beta = min(beta, eval)
                 if alpha <= beta:
                     break
-            return minEval
+            return minEval, None
 
 
 class LateStrat(Strategy):
@@ -143,7 +112,7 @@ class LateStrat(Strategy):
         :param token: a token string
         :return: to_space_id
         """
-        raise NotImplementedError
+        return board.neighbor_tiles(token)
 
     def pushouts(self, board, token):
         """
@@ -152,37 +121,7 @@ class LateStrat(Strategy):
         :param token: a token string
         :return: push_space_id
         """
-        raise NotImplementedError
-
-    def potentialLateMoves(self, board, tokenLocation):
-        """
-        Determine the spaces that we can move to with the highest safety and extended safety
-        :param board: A Board object
-        :param tokenLocation: A tile id for the token
-        :return: dictionary of moves with tuples of safety and extended safety as the value
-        """
-        neighbors = board.neighbor_tiles(tokenLocation)
-        moveDict = {}
-        for neighbor in neighbors:
-            tile = neighbor
-            safeness = self.safety(board, neighbor)
-            totalSafeness = 0
-            extendedNeighbors = board.neighbor_tiles(neighbor)
-            for extendedNeighbor in extendedNeighbors:
-                extended_safeness = self.safety(board, extendedNeighbor)
-                totalSafeness += extended_safeness
-            moveDict[tile] = (safeness, totalSafeness)
-        return moveDict
-
-    def boxThemIn(self, board, enemyToken):
-        """
-        Determine the best push to box the enemy in so that they have a smaller playing space than
-        our token
-        :param board: A Board object
-        :param enemyToken: the location of the enemy
-        :return: the best move as decided by hueristic to reduce the enemy playing space
-        """
-
+        return board.push_outable_square_ids()
 
 class EarlyStrat(Strategy):
     """
