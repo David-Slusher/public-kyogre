@@ -71,6 +71,8 @@ class Strategy:
             for child in list(combinations_with_replacement(self.moves(board, self._token),
                                                             self.pushouts(board, self._enemyToken))):
                 ourMove = Move(child[0], child[1])
+                if ourMove.to_square_id == ourMove.pushout_square_id:
+                    pass
                 boardCopy = copy.deepcopy(board)
                 boardCopy.make_move(self._token, ourMove)
                 eval = self.minimax(boardCopy, depth - 1, alpha, beta, False)[0]
@@ -87,6 +89,8 @@ class Strategy:
             for child in list(combinations_with_replacement(board.neighbor_tiles(board.token_location(self._enemyToken)),
                                                             board.push_outable_square_ids())):
                 theirMove = Move(child[0], child[1])
+                if theirMove.to_square_id == theirMove.pushout_square_id:
+                    pass
                 boardCopy = copy.deepcopy(board)
                 boardCopy.make_move(self._token, theirMove)
                 eval = self.minimax(boardCopy, depth - 1, alpha, beta, True)[0]
