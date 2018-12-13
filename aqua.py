@@ -17,7 +17,7 @@ class Aqua(Player):
         :param board: a Board object
         :return: a Move object
         """
-        if not self._strategy.moves(board, currentTile):
+        if not self._strategy.moves(board, board.token_location(self._token)):
             self._strategy = LateStrat(self._token, self._enemyToken)
         return self._strategy.minimax(board, 20, -math.inf, math.inf, True)[1]
 

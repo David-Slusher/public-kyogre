@@ -5,7 +5,7 @@ Last update: 25 NOV 2018
 """
 import isolation
 import random
-
+import aqua
 
 class RandomPlayer(isolation.Player):
     """
