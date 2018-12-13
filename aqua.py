@@ -17,9 +17,12 @@ class Aqua(Player):
         :param board: a Board object
         :return: a Move object
         """
+        print("Aqua taking turn!")
         if len(self._strategy.moves(board, self._token)) == 0:
             self._strategy = LateStrat(self._token, self._enemyToken)
-        move = self._strategy.minimax(board, 1, -math.inf, math.inf, True)[1]
+        move = self._strategy.minimax(board, 2, -math.inf, math.inf, True)[1]
+        print("Aqua's neighbors: ", board.neighbor_tiles(board.token_location(self._token)))
+        print("Aqua's move: ", move)
         return move
 
 class Strategy:
@@ -65,16 +68,23 @@ class Strategy:
         tokenLocation = board.token_location(self._token)
         enemyLocation = board.token_location(self._enemyToken)
         # if at end of a path on the tree OR their are no possible moves to make
-        if depth == 0 or not board.neighbor_tiles(tokenLocation) or not board.neighbor_tiles(enemyLocation):
+
+        if depth == 0 or (not board.neighbor_tiles(tokenLocation) and maximizingPlayer) \
+                or (not board.neighbor_tiles(enemyLocation) and not maximizingPlayer):
             return len(board.neighbor_tiles(tokenLocation)) - len(board.neighbor_tiles(enemyLocation)), None
+
         if maximizingPlayer:
             maxEval = -math.inf
             bestMove = None
             # max 8 children - one for each neighbor tile that a pawn can move to
-            for child in [(move, push) for move in self.moves(board, self._token) for push in self.pushouts(board, self._enemyToken)]:
+            moveList = self.moves(board, self._token)
+            pushList = self.pushouts(board, self._enemyToken) + [tokenLocation]
+            for child in [(move, push) for move in moveList for push in pushList]:
                 ourMove = Move(child[0], child[1])
                 if ourMove.to_square_id == ourMove.pushout_square_id:
                     continue
+                elif not bestMove:
+                    bestMove = ourMove
                 boardCopy = copy.deepcopy(board)
                 boardCopy.make_move(self._token, ourMove)
                 eval = self.minimax(boardCopy, depth - 1, alpha, beta, False)[0]
@@ -88,7 +98,9 @@ class Strategy:
 
         else:
             minEval = math.inf
-            for child in [(move, push) for move in board.neighbor_tiles(board.token_location(self._enemyToken)) for push in board.push_outable_square_ids()]:
+            moveList = list(board.neighbor_tiles(board.token_location(self._enemyToken)))
+            pushList = list(board.push_outable_square_ids()) + [enemyLocation]
+            for child in [(move, push) for move in moveList for push in pushList]:
                 theirMove = Move(child[0], child[1])
                 if theirMove.to_square_id == theirMove.pushout_square_id:
                     continue
@@ -117,7 +129,7 @@ class LateStrat(Strategy):
         :param token: a token string
         :return: to_space_id
         """
-        return board.neighbor_tiles(board.token_location(token))
+        return list(board.neighbor_tiles(board.token_location(token)))
 
     def pushouts(self, board, token):
         """
