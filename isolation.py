@@ -503,7 +503,7 @@ class Match:
             print('Congratulations,', self._winner.name())
 
             # print(self.script())
-            self.script_csv(str(datetime.datetime.now()) + '.csv')
+            #self.script_csv(str(datetime.datetime.now()) + '.csv')
         except Exception as e:
             print("OOPS! Something went wrong.")
             print(self._board.square_id_map())

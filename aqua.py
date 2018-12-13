@@ -175,15 +175,19 @@ class EarlyStrat(Strategy):
         :param start: The starting tile
         :return: True if a path exists, False if not
         """
-        #exists = False
-        for tile in board.neighbor_tiles(start):
-            if self.moving_closer(board, start, tile):
+        found = False
+        visited = set([])
+        q = [start]
+        while q and not found:
+            curr = q.pop(0)
+            visited.add(curr)
+            for tile in board.neighbor_tiles(curr):
                 if board.token_location(self._enemyToken) in board.neighbor_tiles(tile):
-                    return True
-                else:
-                    #if not exists:
-                    return self.path_exists(board, tile)
-        return False
+                    found = True
+                    break
+                if tile not in visited and self.moving_closer(board, curr, tile):
+                    q.append(tile)
+        return True
 
     def moving_closer(self, board, start, tile):
         """
