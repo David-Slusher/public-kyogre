@@ -8,7 +8,7 @@ def main():
     tokens = {'Red' : isolation.Board.RED_TOKEN, 'Blue' : isolation.Board.BLUE_TOKEN}
     exceptions = []
     scores = {"aqua" : 0, "random" : 0}
-    for i in range(20):
+    for i in range(10):
         us = random.choice(list(tokens.keys()))
         them = 'Red' if us == 'Blue' else 'Blue'
 

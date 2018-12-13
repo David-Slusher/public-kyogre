@@ -19,12 +19,12 @@ class Aqua(Player):
         :return: a Move object
         """
         start = time.clock()
-        print("Aqua taking turn!")
+        #print("Aqua taking turn!")
         if len(self._strategy.moves(board, self._token)) == 0:
             self._strategy = LateStrat(self._token, self._enemyToken)
-        move = self._strategy.minimax(board, 2, -math.inf, math.inf, True)[1]
-        print("Aqua's neighbors: ", board.neighbor_tiles(board.token_location(self._token)))
-        print("Aqua's move: ", move)
+        move = self._strategy.minimax(board, 3, -math.inf, math.inf, True)[1]
+        #print("Aqua's neighbors: ", board.neighbor_tiles(board.token_location(self._token)))
+        #print("Aqua's move: ", move)
         end = time.clock()
         print("Aqua turn time: ", end - start, " sec")
         return move
@@ -64,6 +64,20 @@ class Strategy:
         """
         return len(board.neighbor_tiles(tile))
 
+    def extended_safety(self, board, start, depth):
+        """
+        Returns the total safety for a square equaling the total safety of depth squares away from it
+        :param board: a Board object
+        :param start: a starting tile id
+        :param depth: the distance away that the safety is to be calculated using
+        :return: the total calculated safety
+        """
+        if depth == 0:
+            return self.safety(board, start)
+        else:
+            return self.safety(board, start) + sum([self.extended_safety(board, tile, depth-1)
+                                                    for tile in board.neighbor_tiles(start)])
+
     def squares_in_radius(self, board, tokenLocation, radius):
         squares = set([])
         for i in range(radius):
@@ -77,14 +91,20 @@ class Strategy:
     # number of neighbor_tiles
     # alpha should be -infinity, beta should be +infinity
     def minimax(self, board, depth, alpha, beta, maximizingPlayer):
-        #print("im thinking")
+        RADII = 2
         tokenLocation = board.token_location(self._token)
         enemyLocation = board.token_location(self._enemyToken)
         # if at end of a path on the tree OR their are no possible moves to make
 
         if depth == 0 or (not board.neighbor_tiles(tokenLocation) and maximizingPlayer) \
                 or (not board.neighbor_tiles(enemyLocation) and not maximizingPlayer):
-            return len(board.neighbor_tiles(tokenLocation)) - len(board.neighbor_tiles(enemyLocation)), None
+            if not board.neighbor_tiles(tokenLocation) and maximizingPlayer:
+                return -math.inf, None
+            elif not board.neighbor_tiles(enemyLocation) and not maximizingPlayer:
+                return math.inf, None
+            else:
+                return self.extended_safety(board, tokenLocation, RADII) - self.extended_safety(board, enemyLocation, RADII), None
+                #return len(board.neighbor_tiles(tokenLocation)) - len(board.neighbor_tiles(enemyLocation)), None
 
         if maximizingPlayer:
             maxEval = -math.inf
@@ -112,7 +132,7 @@ class Strategy:
         else:
             minEval = math.inf
             moveList = list(board.neighbor_tiles(board.token_location(self._enemyToken)))
-            pushList = list(self.pushable_in_radius(board, tokenLocation, 3)) # Assume opponent will only push near us
+            pushList = list(self.pushable_in_radius(board, tokenLocation, RADII)) # Assume opponent will only push near us
             if not pushList:
                 pushList = list(board.push_outable_square_ids()) + [enemyLocation]
             for child in [(move, push) for move in moveList for push in pushList]:
@@ -166,19 +186,6 @@ class LateStrat(Strategy):
 
         return tileSafenessListSorted
 
-    def extended_safety(self, board, start, depth):
-        """
-        Returns the total safety for a square equaling the total safety of depth squares away from it
-        :param board: a Board object
-        :param start: a starting tile id
-        :param depth: the distance away that the safety is to be calculated using
-        :return: the total calculated safety
-        """
-        if depth == 0:
-            return self.safety(board, start)
-        else:
-            return self.safety(board, start) + sum([self.extended_safety(board, tile, depth-1)
-                                                    for tile in board.neighbor_tiles(start)])
 
 
 class EarlyStrat(Strategy):
