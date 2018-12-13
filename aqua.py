@@ -2,6 +2,7 @@ from isolation import *
 from math import *
 from itertools import *
 import copy
+import time
 
 
 class Aqua(Player):
@@ -17,12 +18,15 @@ class Aqua(Player):
         :param board: a Board object
         :return: a Move object
         """
+        start = time.clock()
         print("Aqua taking turn!")
         if len(self._strategy.moves(board, self._token)) == 0:
             self._strategy = LateStrat(self._token, self._enemyToken)
         move = self._strategy.minimax(board, 2, -math.inf, math.inf, True)[1]
         print("Aqua's neighbors: ", board.neighbor_tiles(board.token_location(self._token)))
         print("Aqua's move: ", move)
+        end = time.clock()
+        print("Aqua turn time: ", end - start, " sec")
         return move
 
 class Strategy:
@@ -59,6 +63,15 @@ class Strategy:
         :return: the number of neighboring tiles a tile has
         """
         return len(board.neighbor_tiles(tile))
+
+    def squares_in_radius(self, board, tokenLocation, radius):
+        squares = set([])
+        for i in range(radius):
+            squares |= board.squares_at_radius(tokenLocation, i)
+        return squares
+
+    def pushable_in_radius(self, board, enemyLocation, radius):
+        return self.squares_in_radius(board, enemyLocation, radius) & board.push_outable_square_ids()
 
     # position is board state, children are all possible moves, static eval of position is
     # number of neighbor_tiles
@@ -99,7 +112,9 @@ class Strategy:
         else:
             minEval = math.inf
             moveList = list(board.neighbor_tiles(board.token_location(self._enemyToken)))
-            pushList = list(board.push_outable_square_ids()) + [enemyLocation]
+            pushList = list(self.pushable_in_radius(board, tokenLocation, 3)) # Assume opponent will only push near us
+            if not pushList:
+                pushList = list(board.push_outable_square_ids()) + [enemyLocation]
             for child in [(move, push) for move in moveList for push in pushList]:
                 theirMove = Move(child[0], child[1])
                 if theirMove.to_square_id == theirMove.pushout_square_id:
@@ -129,7 +144,8 @@ class LateStrat(Strategy):
         :param token: a token string
         :return: to_space_id
         """
-        return list(board.neighbor_tiles(board.token_location(token)))
+        #return list(board.neighbor_tiles(board.token_location(token)))
+        return [move[0] for move in self.potentialLateMoves(board, board.token_location(token))]
 
     def pushouts(self, board, token):
         """
@@ -138,7 +154,32 @@ class LateStrat(Strategy):
         :param token: a token string
         :return: push_space_id
         """
-        return list(board.push_outable_square_ids())
+        considering_for_push = self.pushable_in_radius(board, board.token_location(token), 3)
+        if considering_for_push:
+            return list(considering_for_push)
+        else:
+            return list(board.push_outable_square_ids())
+
+    def potentialLateMoves(self, board, tokenLocation):
+        tileSafenessList = [(tile, self.extended_safety(board, tile, 4)) for tile in board.neighbor_tiles(tokenLocation)]
+        tileSafenessListSorted = sorted(tileSafenessList, key=lambda x: x[1], reverse=True)
+
+        return tileSafenessListSorted
+
+    def extended_safety(self, board, start, depth):
+        """
+        Returns the total safety for a square equaling the total safety of depth squares away from it
+        :param board: a Board object
+        :param start: a starting tile id
+        :param depth: the distance away that the safety is to be calculated using
+        :return: the total calculated safety
+        """
+        if depth == 0:
+            return self.safety(board, start)
+        else:
+            return self.safety(board, start) + sum([self.extended_safety(board, tile, depth-1)
+                                                    for tile in board.neighbor_tiles(start)])
+
 
 class EarlyStrat(Strategy):
     """
