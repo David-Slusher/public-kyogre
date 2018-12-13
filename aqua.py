@@ -17,9 +17,10 @@ class Aqua(Player):
         :param board: a Board object
         :return: a Move object
         """
-        if not self._strategy.moves(board, board.token_location(self._token)):
+        if len(self._strategy.moves(board, self._token)) == 0:
             self._strategy = LateStrat(self._token, self._enemyToken)
-        return self._strategy.minimax(board, 20, -math.inf, math.inf, True)[1]
+        move = self._strategy.minimax(board, 1, -math.inf, math.inf, True)[1]
+        return move
 
 class Strategy:
     def __init__(self, token, enemyToken):
@@ -60,19 +61,20 @@ class Strategy:
     # number of neighbor_tiles
     # alpha should be -infinity, beta should be +infinity
     def minimax(self, board, depth, alpha, beta, maximizingPlayer):
-
+        #print("im thinking")
+        tokenLocation = board.token_location(self._token)
+        enemyLocation = board.token_location(self._enemyToken)
         # if at end of a path on the tree OR their are no possible moves to make
-        if depth == 0 or not board.neighbor_tiles(self._token) or not board.neighbor_tiles(self._enemyToken): #or len(self.board.neighbor_tiles(token_location)) == 0:
-            return len(board.neighbor_tiles(self._token)) - len(board.neighbor_tiles(self._enemyToken)), None
+        if depth == 0 or not board.neighbor_tiles(tokenLocation) or not board.neighbor_tiles(enemyLocation):
+            return len(board.neighbor_tiles(tokenLocation)) - len(board.neighbor_tiles(enemyLocation)), None
         if maximizingPlayer:
             maxEval = -math.inf
             bestMove = None
             # max 8 children - one for each neighbor tile that a pawn can move to
-            for child in list(combinations_with_replacement(self.moves(board, self._token),
-                                                            self.pushouts(board, self._enemyToken))):
+            for child in [(move, push) for move in self.moves(board, self._token) for push in self.pushouts(board, self._enemyToken)]:
                 ourMove = Move(child[0], child[1])
                 if ourMove.to_square_id == ourMove.pushout_square_id:
-                    pass
+                    continue
                 boardCopy = copy.deepcopy(board)
                 boardCopy.make_move(self._token, ourMove)
                 eval = self.minimax(boardCopy, depth - 1, alpha, beta, False)[0]
@@ -86,13 +88,12 @@ class Strategy:
 
         else:
             minEval = math.inf
-            for child in list(combinations_with_replacement(board.neighbor_tiles(board.token_location(self._enemyToken)),
-                                                            board.push_outable_square_ids())):
+            for child in [(move, push) for move in board.neighbor_tiles(board.token_location(self._enemyToken)) for push in board.push_outable_square_ids()]:
                 theirMove = Move(child[0], child[1])
                 if theirMove.to_square_id == theirMove.pushout_square_id:
-                    pass
+                    continue
                 boardCopy = copy.deepcopy(board)
-                boardCopy.make_move(self._token, theirMove)
+                boardCopy.make_move(self._enemyToken, theirMove)
                 eval = self.minimax(boardCopy, depth - 1, alpha, beta, True)[0]
                 minEval = min(minEval, eval)
                 beta = min(beta, eval)
@@ -116,7 +117,7 @@ class LateStrat(Strategy):
         :param token: a token string
         :return: to_space_id
         """
-        return board.neighbor_tiles(token)
+        return board.neighbor_tiles(board.token_location(token))
 
     def pushouts(self, board, token):
         """
@@ -125,7 +126,7 @@ class LateStrat(Strategy):
         :param token: a token string
         :return: push_space_id
         """
-        return board.push_outable_square_ids()
+        return list(board.push_outable_square_ids())
 
 class EarlyStrat(Strategy):
     """
@@ -174,15 +175,15 @@ class EarlyStrat(Strategy):
         :param start: The starting tile
         :return: True if a path exists, False if not
         """
-        exists = False
+        #exists = False
         for tile in board.neighbor_tiles(start):
             if self.moving_closer(board, start, tile):
-                if exists or self._enemyToken in board.neighbor_tiles(tile):
+                if board.token_location(self._enemyToken) in board.neighbor_tiles(tile):
                     return True
                 else:
-                    if not exists:
-                        exists = self.path_exists(board, tile)
-        return exists
+                    #if not exists:
+                    return self.path_exists(board, tile)
+        return False
 
     def moving_closer(self, board, start, tile):
         """
@@ -192,7 +193,8 @@ class EarlyStrat(Strategy):
         :param tile: The tile under consideration for moving to
         :return: True if tile is closer to the enemy pawn than start, False if not
         """
-        if board.distance_between(tile, self._enemyToken) <= board.distance_between(start, self._enemyToken) - 1:
+        if board.distance_between(tile, board.token_location(self._enemyToken)) \
+                <= board.distance_between(start, board.token_location(self._enemyToken)) - 1:
             return True
         else:
             return False
