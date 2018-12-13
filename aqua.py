@@ -182,12 +182,12 @@ class EarlyStrat(Strategy):
             curr = q.pop(0)
             visited.add(curr)
             for tile in board.neighbor_tiles(curr):
-                if board.token_location(self._enemyToken) in board.neighbor_tiles(tile):
+                if board.token_location(self._enemyToken) in board.neighbors(tile):
                     found = True
                     break
                 if tile not in visited and self.moving_closer(board, curr, tile):
                     q.append(tile)
-        return True
+        return found
 
     def moving_closer(self, board, start, tile):
         """
